@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-//import { getArticles } from '../api/client';
+import { getArticles } from '../../api/client';
 import ArticleCard from '../../components/ArticleCard';
 import './HomePage.css';
 
@@ -17,8 +17,8 @@ const HomePage = () => {
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      //const data = await getArticles();
-      //setArticles(data);
+      const data = await getArticles();
+      setArticles(data);
       setError(null);
     } catch (err) {
       setError('Failed to load articles. Please try again later.');

@@ -23,7 +23,7 @@ const ArticleCard = ({ article }) => {
       </p>
       <p className="article-preview">{getPreview(article.content)}</p>
       <Link to={`/article/${article.id}`} className="read-more">
-        Read More <FaAarrowRight/>
+        Read More <FaArrowRight/>
       </Link>
     </div>
   );

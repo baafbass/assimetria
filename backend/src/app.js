@@ -6,7 +6,7 @@ const cron = require('node-cron');
 const articleRoutes = require('./routes/articles');
 const { initDB } = require('./config/database');
 const {_getAllArticles} = require('./services/database');
-//const { generateAndSaveArticle } = require('./services/articleJob');
+const { generateAndSaveArticle } = require('./services/articleJob');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,7 +15,6 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api', articleRoutes);
-
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -33,7 +32,7 @@ async function start() {
     if (articles.length === 0) {
       console.log('Generating initial articles...');
       for (let i = 0; i < 3; i++) {
-        //await generateAndSaveArticle();
+        await generateAndSaveArticle();
         console.log(`Generated article ${i + 1}/3`);
       }
     }
@@ -42,7 +41,7 @@ async function start() {
     cron.schedule('0 9 * * *', async () => {
       console.log('Running scheduled article generation...');
       try {
-        //await generateAndSaveArticle();
+        await generateAndSaveArticle();
         console.log('Scheduled article generated successfully');
       } catch (error) {
         console.error('Error generating scheduled article:', error);

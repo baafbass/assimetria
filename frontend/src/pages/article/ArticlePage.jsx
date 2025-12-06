@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-//import { getArticle } from '../api/client';
+import { getArticle } from '../../api/client';
 import './ArticlePage.css';
 
 import { FaArrowLeft } from "react-icons/fa";
@@ -19,8 +19,8 @@ const ArticlePage = () => {
   const fetchArticle = async () => {
     try {
       setLoading(true);
-      //const data = await getArticle(id);
-      //setArticle(data);
+      const data = await getArticle(id);
+      setArticle(data);
       setError(null);
     } catch (err) {
       setError('Article not found.');
