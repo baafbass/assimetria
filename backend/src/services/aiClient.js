@@ -1,9 +1,6 @@
 const axios = require('axios');
 
-const HF_API_KEY = process.env.HF_API_KEY || '';
-const HF_MODEL = 'mistralai/Mistral-7B-Instruct-v0.2';
-
-const topics = [
+const DEFAULT_TOPICS = [
   'The Future of Artificial Intelligence',
   'Sustainable Living in Modern Cities',
   'The Evolution of Remote Work',
@@ -21,90 +18,102 @@ const topics = [
   'The Ethics of Gene Editing'
 ];
 
-const getRandomTopic = () => {
-  return topics[Math.floor(Math.random() * topics.length)];
+const HF_TOKEN = process.env.HF_API_KEY || '';
+const HF_MODEL = process.env.HF_MODEL || 'openai/gpt-oss-20b:groq'; // set to deepseek-ai/DeepSeek-V3.2:novita if desired
+const ROUTER_BASE = 'https://router.huggingface.co';
+const ROUTER_CHAT_PATH = '/v1/chat/completions';
+const ROUTER_CHAT_URL = `${ROUTER_BASE.replace(/\/$/, '')}${ROUTER_CHAT_PATH}`;
+
+if (!HF_TOKEN) {
+  console.warn('Warning: HF_API_KEY (or HF_TOKEN) is not set — requests will fail without it.');
 }
 
-const generateArticle= async () => {
-  
-  const topic = getRandomTopic();
-  
+const axiosInstance = axios.create({
+  baseURL: ROUTER_BASE,
+  timeout: 120_000,
+  headers: {
+    Authorization: `Bearer ${HF_TOKEN}`,
+    'Content-Type': 'application/json'
+  },
+  validateStatus: (s) => s >= 200 && s < 300 // let axios throw on non-2xx
+});
+
+const getRandomTopic = (topics = DEFAULT_TOPICS) =>
+  topics[Math.floor(Math.random() * topics.length)];
+
+
+async function callRouterChat(messages, opts = {}) {
+  const body = {
+    model: HF_MODEL,
+    messages,
+    temperature: opts.temperature ?? 0.7,
+    max_tokens: opts.max_tokens ?? 1000,
+    top_p: opts.top_p ?? 0.9,
+    stream: false
+  };
+
+  let res;
   try {
-
-    const response = await axios.post(
-      `https://api-inference.huggingface.co/models/${HF_MODEL}`,
-      {
-        inputs: `Write a comprehensive blog article about "${topic}". Include an introduction, main points, and conclusion. Make it informative and engaging. Article:`,
-        parameters: {
-          max_new_tokens: 800,
-          temperature: 0.7,
-          top_p: 0.9,
-          return_full_text: false
-        }
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${HF_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 60000
-      }
-    );
-
-    console.log('response',response);
-
-    let content = '';
-    if (response.data && response.data[0] && response.data[0].generated_text) {
-      content = response.data[0].generated_text.trim();
-    }
-
-    // Fallback if API fails or returns empty
-    if (!content || content.length < 100) {
-      content = generateFallbackArticle(topic);
-    }
-
-    return {
-      title: topic,
-      content: content
-    };
-  } catch (error) {
-    console.error('Error calling AI API:', error.message);
-    // Fallback to generated content
-    return {
-      title: topic,
-      content: generateFallbackArticle(topic)
-    };
+    res = await axiosInstance.post(ROUTER_CHAT_PATH, body);
+  } catch (err) {
+    // Build helpful error text
+    const status = err.response ? `status=${err.response.status}` : `code=${err.code || 'NO_CODE'}`;
+    const snippet = err.response && err.response.data ? JSON.stringify(err.response.data).slice(0, 1000) : '';
+    const msg = `router request failed (${status}). ${snippet}`;
+    const e = new Error(msg);
+    e.cause = err;
+    throw e;
   }
+
+  if (!res || !res.data) {
+    throw new Error('Empty response from router endpoint');
+  }
+
+  // expected: { choices: [ { message: { role, content } } ], ... }
+  if (!Array.isArray(res.data.choices) || !res.data.choices[0]) {
+    throw new Error(`Unexpected router response shape: ${JSON.stringify(res.data).slice(0, 1000)}`);
+  }
+
+  const choice = res.data.choices[0];
+
+  // Extract content robustly (strings, arrays, objects)
+  let content = '';
+  if (choice.message) {
+    if (typeof choice.message.content === 'string') {
+      content = choice.message.content.trim();
+    } else if (Array.isArray(choice.message.content)) {
+      content = choice.message.content.map(p => (typeof p === 'string' ? p : (p?.text || ''))).join('').trim();
+    } else if (typeof choice.message === 'string') {
+      content = choice.message.trim();
+    } else if (typeof choice.message.content === 'object' && choice.message.content?.text) {
+      content = String(choice.message.content.text).trim();
+    }
+  }
+
+  if (!content || content.length < 20) {
+    throw new Error(`Router returned empty/too-short content: ${JSON.stringify(res.data).slice(0, 2000)}`);
+  }
+
+  return content;
 }
 
-const generateFallbackArticle = (topic) => {
-  return `# ${topic}
+async function generateArticle({ topic: providedTopic } = {}) {
+  const topic = providedTopic || getRandomTopic();
 
-In today's rapidly evolving world, ${topic.toLowerCase()} has become increasingly relevant. This article explores the key aspects and implications of this important subject.
+  const userMessage = {
+    role: 'user',
+    content: `Write a comprehensive blog article about "${topic}". Include an introduction, main points, and conclusion. Make it informative and engaging. Use markdown formatting.`
+  };
 
-## Introduction
-
-The landscape of ${topic.toLowerCase()} is constantly changing, presenting both opportunities and challenges. Understanding these dynamics is crucial for anyone interested in staying informed about current trends and developments.
-
-## Key Points
-
-The importance of ${topic.toLowerCase()} cannot be overstated. Several factors contribute to its significance:
-
-First, the technological advancements in this field have opened up new possibilities that were previously unimaginable. Innovation continues to drive progress at an unprecedented pace.
-
-Second, the societal impact is profound and far-reaching. As we navigate through these changes, it's essential to consider both the benefits and potential drawbacks.
-
-Third, the future implications suggest that this topic will only grow in importance. Staying informed and adaptable will be key to success.
-
-## Looking Forward
-
-As we move forward, ${topic.toLowerCase()} will undoubtedly continue to evolve. The intersection of technology, society, and innovation creates a dynamic environment full of potential.
-
-## Conclusion
-
-Understanding ${topic.toLowerCase()} is essential in our modern world. By staying informed and engaged with these developments, we can better prepare for the future and make meaningful contributions to the ongoing dialogue.
-
-The journey ahead promises to be exciting, challenging, and full of opportunities for those willing to engage with these important issues.`;
+  try {
+    console.log('Calling Hugging Face router chat at', ROUTER_CHAT_URL);
+    const content = await callRouterChat([userMessage], { max_tokens: 1000 });
+    return { title: topic, content };
+  } catch (err) {
+    console.log('error',err)
+    console.error('generateArticle failed:', err.message || err);
+    throw new Error(`generateArticle: failed to generate article for topic="${topic}". ${err.message || ''}`);
+  }
 }
 
 module.exports = {

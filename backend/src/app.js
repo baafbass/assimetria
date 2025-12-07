@@ -16,6 +16,7 @@ app.use(express.json());
 
 app.use('/api', articleRoutes);
 
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
