@@ -19,7 +19,7 @@ const DEFAULT_TOPICS = [
 ];
 
 const HF_TOKEN = process.env.HF_API_KEY || '';
-const HF_MODEL = process.env.HF_MODEL || 'openai/gpt-oss-20b:groq'; // set to deepseek-ai/DeepSeek-V3.2:novita if desired
+const HF_MODEL = process.env.HF_MODEL
 const ROUTER_BASE = 'https://router.huggingface.co';
 const ROUTER_CHAT_PATH = '/v1/chat/completions';
 const ROUTER_CHAT_URL = `${ROUTER_BASE.replace(/\/$/, '')}${ROUTER_CHAT_PATH}`;
@@ -110,7 +110,6 @@ async function generateArticle({ topic: providedTopic } = {}) {
     const content = await callRouterChat([userMessage], { max_tokens: 1000 });
     return { title: topic, content };
   } catch (err) {
-    console.log('error',err)
     console.error('generateArticle failed:', err.message || err);
     throw new Error(`generateArticle: failed to generate article for topic="${topic}". ${err.message || ''}`);
   }
