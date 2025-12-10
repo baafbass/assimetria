@@ -29,6 +29,7 @@ React-based frontend for displaying AI-generated blog articles.
 
 ## Project Structure
 
+```
 frontend/
     ├── public/
         └── vite.svg
@@ -62,6 +63,7 @@ frontend/
     ├── package.json
     ├── README.md
     └── vite.config.js
+```
 
 ## Components
 
