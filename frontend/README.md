@@ -1,16 +1,112 @@
-# React + Vite
+# Frontend - Assimetria
+React-based frontend for displaying AI-generated blog articles.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Features
 
-Currently, two official plugins are available:
+- Modern **React 18** + **Vite**
+- **React Router** for navigation
+- Responsive design
+- Article list and detail views
+- **Nginx** for production serving
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Setup
 
-## React Compiler
+### Install Dependencies
+ ```bash
+ npm install
+ ```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Environment Variables
+ ```env
+ VITE_API_URL=/api
+ ```
 
-## Expanding the ESLint configuration
+### Run Development Server
+ ```bash
+ npm start
+ ```
+ App opens at http://localhost:5173/
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Project Structure
+
+frontend/
+    ├── public/
+        └── vite.svg
+    ├── src/
+        ├── api/
+            └── client.js
+        ├── assets/
+            └── react.svg
+        ├── components/
+            ├── ArticleCard.css
+            └── ArticleCard.jsx
+        ├── pages/
+            ├── article/
+                ├── ArticlePage.css
+                └── ArticlePage.jsx
+            └── home/
+                ├── HomePage.css
+                └── HomePage.jsx
+        ├── utils/
+            └── article.js
+        ├── App.css
+        ├── App.jsx
+        ├── index.css
+        └── main.jsx
+    ├── .gitignore
+    ├── Dockerfile
+    ├── eslint.config.js
+    ├── index.html
+    ├── nginx.conf
+    ├── package-lock.json
+    ├── package.json
+    ├── README.md
+    └── vite.config.js
+
+## Components
+
+### HomePage
+
+- Fetches and displays all articles
+- Grid layout with article cards
+- Loading and error states
+
+### ArticlePage
+
+- Displays full article content
+- Dynamic routing with article ID
+- Back navigation
+
+### ArticleCard
+
+- Reusable article preview
+- Shows title, date, and excerpt
+- Links to full article
+
+### Styling
+
+- CSS Modules for component styles
+- Responsive design (mobile-first)
+- Clean, modern UI
+
+## Docker
+
+### Build:
+
+```bash
+docker build -t autoblog-frontend .
+```
+
+## The Docker build:
+
+1. Builds React app
+2. Copies to Nginx
+3. Serves on port 80
+
+## Nginx Configuration
+
+### The nginx.conf file:
+
+- Serves React app
+- Proxies /api requests to backend
+- Handles client-side routing
