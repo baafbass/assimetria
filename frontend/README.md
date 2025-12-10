@@ -3,7 +3,7 @@ React-based frontend for displaying AI-generated blog articles.
 
 ## Features
 
-- Modern **React 18** + **Vite**
+- Modern **React 19** + **Vite**
 - **React Router** for navigation
 - Responsive design
 - Article list and detail views
